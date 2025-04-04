@@ -27,7 +27,7 @@ export async function generateStudyPlan(
   subject: string,
   topics: string[],
   examDateTime: string
-): Promise<void> {
+): Promise<{ message: string; plan: string }> {
   const response = await apiRequest(
     "POST",
     "/api/study-plan",
@@ -56,6 +56,10 @@ export async function generateStudyPlan(
       throw new Error(`Failed to generate study plan (Status: ${response.status}). Please check your API key and try again.`);
     }
   }
+
+  // Parse and return the successful response
+  const data = await response.json();
+  return data;
 }
 
 // Generate notes for a topic

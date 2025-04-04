@@ -35,7 +35,7 @@ export default function StudyPlan() {
       const topicsList = topics.split(",").map(topic => topic.trim());
       
       // Call AI service to generate the study plan
-      await generateStudyPlan(subject, topicsList, examDateTime);
+      const { plan } = await generateStudyPlan(subject, topicsList, examDateTime);
       
       // Save the study plan to local storage
       saveStudyPlan({
