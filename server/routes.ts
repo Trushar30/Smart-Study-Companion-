@@ -11,17 +11,33 @@ let model: any = null;
 // Only initialize the AI model if we have a valid API key
 if (GEMINI_API_KEY) {
   console.log("Initializing Gemini AI with API key");
+  // Log first few characters of the key to verify format (don't log the full key for security)
+  console.log("API key format check (first 5 chars):", GEMINI_API_KEY.substring(0, 5));
+  
   try {
+    // Debug: Make sure we're using a valid version of the library
+    console.log("Using @google/generative-ai library");
+    
     genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-    // Try a different model version - older model may be more widely available
+    
+    // Try with the canonical model name 
     try {
       model = genAI.getGenerativeModel({ model: "gemini-pro" });
       console.log("Gemini AI model initialized successfully with gemini-pro");
-    } catch (error) {
-      console.error("Error with gemini-pro model, trying alternative:", error);
-      // Fallback to a newer model if available
-      model = genAI.getGenerativeModel({ model: "gemini-1.0-pro" });
-      console.log("Gemini AI model initialized successfully with gemini-1.0-pro");
+    } catch (modelError) {
+      console.error("Error with gemini-pro model:", modelError);
+      
+      // Try with other options
+      try {
+        model = genAI.getGenerativeModel({ model: "gemini-1.0-pro" });
+        console.log("Gemini AI model initialized successfully with gemini-1.0-pro");
+      } catch (fallbackError) {
+        console.error("Error with gemini-1.0-pro model, trying final option:", fallbackError);
+        
+        // Last resort option
+        model = genAI.getGenerativeModel({ model: "models/gemini-pro" });
+        console.log("Gemini AI model initialized successfully with models/gemini-pro");
+      }
     }
   } catch (error) {
     console.error("Error initializing Gemini AI model:", error);
@@ -53,19 +69,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       The exam is scheduled for ${examDateTime}.
       Structure the response with daily study goals, topic prioritization, and recommended study times.`;
       
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const text = response.text();
+      console.log("Sending prompt to Gemini API:", prompt.substring(0, 100) + "...");
+      
+      let responseText = "";
+      try {
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        responseText = response.text();
+        console.log("Successfully received response from Gemini API");
+      } catch (genAIError) {
+        console.error("Detailed Gemini API error:", genAIError);
+        throw new Error(`Gemini API error: ${genAIError instanceof Error ? genAIError.message : "Unknown error"}`);
+      }
       
       // Store in memory if needed for later use
       await storage.saveStudyPlan({
         subject,
         topics,
         examDateTime,
-        content: text
+        content: responseText
       });
       
-      res.json({ message: "Study plan generated successfully", plan: text });
+      res.json({ message: "Study plan generated successfully", plan: responseText });
     } catch (error) {
       console.error("Error generating study plan:", error);
       // Provide a more detailed error message
@@ -103,14 +128,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       Make the notes easy to understand and remember.
       Use HTML formatting for structure (headings, lists, etc.)`;
       
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const content = response.text();
+      console.log("Sending notes generation prompt to Gemini API:", prompt.substring(0, 100) + "...");
+      
+      let content = "";
+      try {
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        content = response.text();
+        console.log("Successfully received notes from Gemini API");
+      } catch (genAIError) {
+        console.error("Detailed Gemini API error:", genAIError);
+        throw new Error(`Gemini API error: ${genAIError instanceof Error ? genAIError.message : "Unknown error"}`);
+      }
       
       res.json({ message: "Notes generated successfully", content });
     } catch (error) {
       console.error("Error generating notes:", error);
-      res.status(500).json({ message: "Failed to generate notes" });
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      res.status(500).json({ 
+        message: "Failed to generate notes", 
+        error: errorMessage
+      });
     }
   });
 
@@ -137,14 +175,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       Use HTML formatting for structure (headings, lists, etc.).
       Make the explanation engaging, memorable, and easy to understand for a student.`;
       
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const content = response.text();
+      console.log("Sending explanation prompt to Gemini API:", prompt.substring(0, 100) + "...");
+      
+      let content = "";
+      try {
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        content = response.text();
+        console.log("Successfully received explanation from Gemini API");
+      } catch (genAIError) {
+        console.error("Detailed Gemini API error:", genAIError);
+        throw new Error(`Gemini API error: ${genAIError instanceof Error ? genAIError.message : "Unknown error"}`);
+      }
       
       res.json({ message: "Explanation generated successfully", content });
     } catch (error) {
       console.error("Error generating explanation:", error);
-      res.status(500).json({ message: "Failed to generate explanation" });
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      res.status(500).json({ 
+        message: "Failed to generate explanation", 
+        error: errorMessage
+      });
     }
   });
 
@@ -184,9 +235,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ]
       }`;
       
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const text = response.text();
+      console.log("Sending quiz generation prompt to Gemini API:", prompt.substring(0, 100) + "...");
+      
+      let text = "";
+      try {
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        text = response.text();
+        console.log("Successfully received quiz data from Gemini API");
+      } catch (genAIError) {
+        console.error("Detailed Gemini API error:", genAIError);
+        throw new Error(`Gemini API error: ${genAIError instanceof Error ? genAIError.message : "Unknown error"}`);
+      }
       
       // Parse the JSON response from the AI
       try {
@@ -202,7 +262,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     } catch (error) {
       console.error("Error generating quiz:", error);
-      res.status(500).json({ message: "Failed to generate quiz" });
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      res.status(500).json({ 
+        message: "Failed to generate quiz", 
+        error: errorMessage
+      });
     }
   });
 

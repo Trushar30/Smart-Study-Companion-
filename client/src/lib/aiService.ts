@@ -25,10 +25,12 @@ export async function generateStudyPlan(
     try {
       // Try to get detailed error message from response
       const data = await response.json();
+      console.error("Error details from server:", data);
       throw new Error(data.error || "Failed to generate study plan");
     } catch (e) {
       // If we can't parse the JSON response, use generic error
-      throw new Error("Failed to generate study plan. Please check your API key and try again.");
+      console.error("Error parsing server response:", e);
+      throw new Error(`Failed to generate study plan (Status: ${response.status}). Please check your API key and try again.`);
     }
   }
 }
@@ -50,7 +52,16 @@ export async function generateNotes(
   }
   
   if (!response.ok) {
-    throw new Error("Failed to generate notes");
+    try {
+      // Try to get detailed error message from response
+      const data = await response.json();
+      console.error("Error details from server:", data);
+      throw new Error(data.error || "Failed to generate notes");
+    } catch (e) {
+      // If we can't parse the JSON response, use generic error
+      console.error("Error parsing server response:", e);
+      throw new Error(`Failed to generate notes (Status: ${response.status}). Please check your API key and try again.`);
+    }
   }
   
   const data = await response.json();
@@ -70,7 +81,16 @@ export async function generateRealWorldExplanation(topic: string): Promise<strin
   }
   
   if (!response.ok) {
-    throw new Error("Failed to generate explanation");
+    try {
+      // Try to get detailed error message from response
+      const data = await response.json();
+      console.error("Error details from server:", data);
+      throw new Error(data.error || "Failed to generate explanation");
+    } catch (e) {
+      // If we can't parse the JSON response, use generic error
+      console.error("Error parsing server response:", e);
+      throw new Error(`Failed to generate explanation (Status: ${response.status}). Please check your API key and try again.`);
+    }
   }
   
   const data = await response.json();
@@ -94,7 +114,16 @@ export async function generateQuiz(
   }
   
   if (!response.ok) {
-    throw new Error("Failed to generate quiz");
+    try {
+      // Try to get detailed error message from response
+      const data = await response.json();
+      console.error("Error details from server:", data);
+      throw new Error(data.error || "Failed to generate quiz");
+    } catch (e) {
+      // If we can't parse the JSON response, use generic error
+      console.error("Error parsing server response:", e);
+      throw new Error(`Failed to generate quiz (Status: ${response.status}). Please check your API key and try again.`);
+    }
   }
   
   const data = await response.json();
