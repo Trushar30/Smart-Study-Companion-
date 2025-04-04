@@ -22,7 +22,14 @@ export async function generateStudyPlan(
   }
   
   if (!response.ok) {
-    throw new Error("Failed to generate study plan");
+    try {
+      // Try to get detailed error message from response
+      const data = await response.json();
+      throw new Error(data.error || "Failed to generate study plan");
+    } catch (e) {
+      // If we can't parse the JSON response, use generic error
+      throw new Error("Failed to generate study plan. Please check your API key and try again.");
+    }
   }
 }
 

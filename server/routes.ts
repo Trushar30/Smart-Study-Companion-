@@ -1,4 +1,4 @@
-import type { Express, Request, Response } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { GoogleGenerativeAI } from "@google/generative-ai";
@@ -10,8 +10,22 @@ let model: any = null;
 
 // Only initialize the AI model if we have a valid API key
 if (GEMINI_API_KEY) {
-  genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-  model = genAI.getGenerativeModel({ model: "gemini-pro" });
+  console.log("Initializing Gemini AI with API key");
+  try {
+    genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+    // Try a different model version - older model may be more widely available
+    try {
+      model = genAI.getGenerativeModel({ model: "gemini-pro" });
+      console.log("Gemini AI model initialized successfully with gemini-pro");
+    } catch (error) {
+      console.error("Error with gemini-pro model, trying alternative:", error);
+      // Fallback to a newer model if available
+      model = genAI.getGenerativeModel({ model: "gemini-1.0-pro" });
+      console.log("Gemini AI model initialized successfully with gemini-1.0-pro");
+    }
+  } catch (error) {
+    console.error("Error initializing Gemini AI model:", error);
+  }
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -54,7 +68,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Study plan generated successfully", plan: text });
     } catch (error) {
       console.error("Error generating study plan:", error);
-      res.status(500).json({ message: "Failed to generate study plan" });
+      // Provide a more detailed error message
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      res.status(500).json({ 
+        message: "Failed to generate study plan", 
+        error: errorMessage
+      });
     }
   });
 
