@@ -42,6 +42,17 @@ export const topicProgress = pgTable("topic_progress", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+export const checkpoints = pgTable("checkpoints", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id),
+  studyPlanId: integer("study_plan_id").references(() => studyPlans.id),
+  topic: text("topic").notNull(),
+  dateCompleted: timestamp("date_completed").defaultNow().notNull(),
+  minutesSpent: integer("minutes_spent").notNull(),
+  notes: text("notes"),
+  isCompleted: boolean("is_completed").default(false).notNull(),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
@@ -74,10 +85,21 @@ export const insertTopicProgressSchema = createInsertSchema(topicProgress).pick(
   progress: true,
 });
 
+export const insertCheckpointSchema = createInsertSchema(checkpoints).pick({
+  userId: true,
+  studyPlanId: true,
+  topic: true,
+  minutesSpent: true,
+  notes: true,
+  isCompleted: true,
+});
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
+export type InsertCheckpoint = z.infer<typeof insertCheckpointSchema>;
 export type User = typeof users.$inferSelect;
 export type StudyPlan = typeof studyPlans.$inferSelect;
 export type Note = typeof notes.$inferSelect;
 export type QuizResult = typeof quizResults.$inferSelect;
 export type TopicProgress = typeof topicProgress.$inferSelect;
+export type Checkpoint = typeof checkpoints.$inferSelect;
