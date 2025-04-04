@@ -2,8 +2,25 @@ import { Question } from "./types";
 import { apiRequest } from "./queryClient";
 import { generateId } from "./utils";
 
-// API key error message
+// Error messages
 const API_KEY_MISSING_MESSAGE = "Gemini API key is not configured. Please set a valid GEMINI_API_KEY in the environment variables.";
+const MODEL_NOT_FOUND_MESSAGE = "The Gemini AI model could not be found. This could be due to an API version mismatch.";
+const API_CONNECTIVITY_ISSUES = "Unable to connect to the Gemini AI service. Please check your internet connection and try again.";
+
+// Helper function to parse error messages from the server
+function parseErrorFromResponse(responseText: string): string {
+  // Check for specific error patterns in the response
+  if (responseText.includes("is not found for API version")) {
+    return MODEL_NOT_FOUND_MESSAGE;
+  }
+  
+  if (responseText.includes("Error fetching from")) {
+    return API_CONNECTIVITY_ISSUES;
+  }
+  
+  // Return the original message if no patterns match
+  return responseText;
+}
 
 // Generate a study plan
 export async function generateStudyPlan(
@@ -26,7 +43,13 @@ export async function generateStudyPlan(
       // Try to get detailed error message from response
       const data = await response.json();
       console.error("Error details from server:", data);
-      throw new Error(data.error || "Failed to generate study plan");
+      
+      // Parse the error message for user-friendly display
+      const errorMessage = data.error 
+        ? parseErrorFromResponse(data.error)
+        : "Failed to generate study plan";
+      
+      throw new Error(errorMessage);
     } catch (e) {
       // If we can't parse the JSON response, use generic error
       console.error("Error parsing server response:", e);
@@ -56,7 +79,13 @@ export async function generateNotes(
       // Try to get detailed error message from response
       const data = await response.json();
       console.error("Error details from server:", data);
-      throw new Error(data.error || "Failed to generate notes");
+      
+      // Parse the error message for user-friendly display
+      const errorMessage = data.error 
+        ? parseErrorFromResponse(data.error)
+        : "Failed to generate notes";
+        
+      throw new Error(errorMessage);
     } catch (e) {
       // If we can't parse the JSON response, use generic error
       console.error("Error parsing server response:", e);
@@ -85,7 +114,13 @@ export async function generateRealWorldExplanation(topic: string): Promise<strin
       // Try to get detailed error message from response
       const data = await response.json();
       console.error("Error details from server:", data);
-      throw new Error(data.error || "Failed to generate explanation");
+      
+      // Parse the error message for user-friendly display
+      const errorMessage = data.error 
+        ? parseErrorFromResponse(data.error)
+        : "Failed to generate explanation";
+        
+      throw new Error(errorMessage);
     } catch (e) {
       // If we can't parse the JSON response, use generic error
       console.error("Error parsing server response:", e);
@@ -118,7 +153,13 @@ export async function generateQuiz(
       // Try to get detailed error message from response
       const data = await response.json();
       console.error("Error details from server:", data);
-      throw new Error(data.error || "Failed to generate quiz");
+      
+      // Parse the error message for user-friendly display
+      const errorMessage = data.error 
+        ? parseErrorFromResponse(data.error)
+        : "Failed to generate quiz";
+        
+      throw new Error(errorMessage);
     } catch (e) {
       // If we can't parse the JSON response, use generic error
       console.error("Error parsing server response:", e);

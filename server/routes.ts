@@ -20,23 +20,63 @@ if (GEMINI_API_KEY) {
     
     genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
     
-    // Try with the canonical model name 
+    // The API version for Google's Generative AI has changed, so we need to use the latest model names
+    // Try the latest model format first - from newer versions of the API
     try {
-      model = genAI.getGenerativeModel({ model: "gemini-pro" });
-      console.log("Gemini AI model initialized successfully with gemini-pro");
-    } catch (modelError) {
-      console.error("Error with gemini-pro model:", modelError);
+      model = genAI.getGenerativeModel({ 
+        model: "gemini-1.5-pro",
+        generationConfig: {
+          temperature: 0.7,
+          topP: 0.9,
+          topK: 40,
+          maxOutputTokens: 2048
+        }
+      });
+      console.log("Gemini AI model initialized successfully with gemini-1.5-pro");
+    } catch (firstError) {
+      console.error("Error with gemini-1.5-pro model, trying alternative:", firstError);
       
-      // Try with other options
       try {
-        model = genAI.getGenerativeModel({ model: "gemini-1.0-pro" });
+        model = genAI.getGenerativeModel({ 
+          model: "gemini-1.0-pro",
+          generationConfig: {
+            temperature: 0.7,
+            topP: 0.9,
+            topK: 40,
+            maxOutputTokens: 2048
+          }
+        });
         console.log("Gemini AI model initialized successfully with gemini-1.0-pro");
-      } catch (fallbackError) {
-        console.error("Error with gemini-1.0-pro model, trying final option:", fallbackError);
+      } catch (secondError) {
+        console.error("Error with gemini-1.0-pro model, trying another option:", secondError);
         
-        // Last resort option
-        model = genAI.getGenerativeModel({ model: "models/gemini-pro" });
-        console.log("Gemini AI model initialized successfully with models/gemini-pro");
+        try {
+          // Try with the fully qualified path for v1beta
+          model = genAI.getGenerativeModel({ 
+            model: "models/gemini-pro",
+            generationConfig: {
+              temperature: 0.7,
+              topP: 0.9,
+              topK: 40,
+              maxOutputTokens: 2048
+            }
+          });
+          console.log("Gemini AI model initialized successfully with models/gemini-pro");
+        } catch (thirdError) {
+          console.error("Error with models/gemini-pro, trying basic name:", thirdError);
+          
+          // Last attempt with the standard model name
+          model = genAI.getGenerativeModel({ 
+            model: "gemini-pro",
+            generationConfig: {
+              temperature: 0.7,
+              topP: 0.9,
+              topK: 40,
+              maxOutputTokens: 2048
+            }
+          });
+          console.log("Gemini AI model initialized successfully with gemini-pro");
+        }
       }
     }
   } catch (error) {
